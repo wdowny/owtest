@@ -30,9 +30,7 @@ do {
         }
         if ($last_header == false && $prev_header == false) break;
     } while (true);
-    var_dump($headers);
     $i++;
-    
     $authorized = false;
     if (isset($headers['authorization']) && strstr($headers['authorization'], 'Basic')) {
         $auth_pair = base64_decode(trim(str_replace('Basic', '', $headers['authorization'])));
@@ -41,12 +39,14 @@ do {
     if ($authorized) {
         $payload  = "PID: " . getmypid() . "\r\n";
         $payload .= "Request completed: ". $i . "\r\n";
+        $payload .= ($current_commit = getCurrentCommit()) ? ("Git commit: " . $current_commit . "\r\n") : ("Cannot get Git status!\r\n");
+        $payload .= ($res_usage = getResourceUsage()) ? ("Resource usage:\r\n" . $res_usage . "\r\n") : ("Cannot get CPU/mem usage");
         $response = "HTTP/1.1 200 OK\r\n\r\n" . $payload . "\r\n";
     } else {
         $resp_headers = "HTTP/1.1 401 Access Denied\r\n";
         $resp_headers .= "WWW-Authenticate: Basic realm=\"AREA 51\"\r\n";
-        $resp_headers .= "Content-Length: 0\r\n";
-        $payload = '';
+//        $resp_headers .= "Content-Length: 0\r\n";
+        $payload = '401 UnAuthorized!';
         $response = $resp_headers . "\r\n" . $payload . "\r\n";
     }
     socket_write($conn, $response, strlen($response));
@@ -55,3 +55,14 @@ do {
 } while (true);
 
 socket_close($sock);
+
+function getCurrentCommit() {
+    $t = file_get_contents('.git/HEAD'); if (!$t) return false;
+    $ref = trim(str_replace('ref: ', '', $t));
+    return trim(file_get_contents('.git/' . $ref));
+}
+
+function getResourceUsage() {
+    $pid = getmypid(); 
+    return `ps -p {$pid} -o%cpu,%mem,rss`; 
+}
