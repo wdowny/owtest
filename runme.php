@@ -13,7 +13,7 @@ socket_listen($sock, 3);
 $i = 0;
 do {
     $conn = socket_accept($sock);
-    $headers_stack = []; $last_header = ''; $prev_header = '';
+    $headers = []; $last_header = ''; $prev_header = '';
 
     do { // reading request headers from client
         $buffer = socket_read($conn, 8192, PHP_NORMAL_READ);
