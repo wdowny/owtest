@@ -1,17 +1,17 @@
 <?php
 define("CRLF", "\r\n"); echo CRLF;
 define("NAMETAG", "-test-ymedyanik");
-
+$aws_phar_path = __DIR__.'aws.phar';
 // Тащим SDK для PHP. Упрощённо, без проверки на битый/неправильный phar, отсутствие классов и проч.
-if (file_exists('aws.phar')) {
-    include_once('aws.phar');
+if (file_exists($aws_phar_path)) {
+    include_once($aws_phar_path);
 } else {
     echo "Trying to download AWS SDK... ";
-    if ( file_put_contents("aws.phar", file_get_contents("https://docs.aws.amazon.com/aws-sdk-php/v3/download/aws.phar")) )
+    if ( file_put_contents($aws_phar_path, file_get_contents("https://docs.aws.amazon.com/aws-sdk-php/v3/download/aws.phar")) )
             echo "OK".CRLF;
         else
             echo "somethig wrong".CRLF;        
-    if (! @include_once('aws.phar')) die('Cannot load AWS SDK!'.CRLF);
+    if (! @include_once($aws_phar_path)) die('Cannot load AWS SDK!'.CRLF);
 }
 use Aws\Ec2\Ec2Client;
 

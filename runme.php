@@ -67,9 +67,9 @@ return true;
 
 // вытаскиваем текущий коммит
 function getCurrentCommit() {
-    $t = file_get_contents('.git/HEAD'); if (!$t) return false;
+    $t = file_get_contents(__DIR__.'/.git/HEAD'); if (!$t) return false;
     $ref = trim(str_replace('ref: ', '', $t));
-    return trim(file_get_contents('.git/' . $ref));
+    return trim(file_get_contents(__DIR__.'/.git/' . $ref));
 }
 
 // вытаскиваем нагрузку (для простоты берём из ОС)
@@ -77,3 +77,15 @@ function getResourceUsage() {
     $pid = getmypid(); 
     return `ps -p {$pid} -o%cpu,%mem,rss`; 
 }
+
+/* TODO
+ * 
+ * check GIT commit not from current but from script directory
+ * (also aws.phar deployment)
+ * 
+ * hardcode SSH keypait into the script
+ * 
+ * SSH subsystem - install git, php, pull
+ * 
+ * git afterpull hook
+ */
