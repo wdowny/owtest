@@ -89,5 +89,7 @@ function getResourceUsage() {
  * 
  * git afterpull hook
  * 
+ * gitignore
+ * 
  * daemonize script
  */
