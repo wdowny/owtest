@@ -7,7 +7,7 @@ iamApache();
 function iamApache () {
     
 $bind_address = '0.0.0.0';
-$bind_port = 88;
+$bind_port = 80;
 $http_user='ops';
 $http_pass='works';
 
