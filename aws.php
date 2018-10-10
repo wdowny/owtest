@@ -1,7 +1,7 @@
 <?php
 define("CRLF", "\r\n"); echo CRLF;
 define("NAMETAG", "-test-ymedyanik");
-$aws_phar_path = __DIR__.'aws.phar';
+$aws_phar_path = __DIR__.'/aws.phar';
 // Тащим SDK для PHP. Упрощённо, без проверки на битый/неправильный phar, отсутствие классов и проч.
 if (file_exists($aws_phar_path)) {
     include_once($aws_phar_path);
