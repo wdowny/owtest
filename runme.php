@@ -88,4 +88,6 @@ function getResourceUsage() {
  * SSH subsystem - install git, php, pull
  * 
  * git afterpull hook
+ * 
+ * daemonize script
  */
