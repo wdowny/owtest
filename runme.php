@@ -65,14 +65,14 @@ return true;
 }
 
 
-// вытаскиваем текущий коммит
+// Вытаскиваем текущий коммит
 function getCurrentCommit() {
     $t = file_get_contents(__DIR__.'/.git/HEAD'); if (!$t) return false;
     $ref = trim(str_replace('ref: ', '', $t));
     return trim(file_get_contents(__DIR__.'/.git/' . $ref));
 }
 
-// вытаскиваем нагрузку (для простоты берём из ОС)
+// Вытаскиваем нагрузку (для простоты берём из ОС)
 function getResourceUsage() {
     $pid = getmypid(); 
     return `ps -p {$pid} -o%cpu,%mem,rss`; 
@@ -92,4 +92,16 @@ function getResourceUsage() {
  * gitignore
  * 
  * daemonize script
+ * 
+ * 
+ * 
+ * Required PHP ext
+ * 
+ * json
+ * filter
+ * openssl
+ * phar
+ * simplexml
+ * sockets
+ * 
  */
