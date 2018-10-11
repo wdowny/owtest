@@ -14,10 +14,16 @@ HTTP service:
 Output:
   some messages and pauses during script flow. URL and its content will be produced after well finished job.
   
-Tested at least in one AWS environment.
+Tested at least in two different AWS environment.
 
 Objects created by the script:
 - one Key Pair with custom name
 - one Security Group with custom name
 - one EC2 Instance (using token for idempotency)
 - if not attached, one additional 1GB standard volume
+
+Known issues:
+- bad timeout control
+- bad block / command completion control
+- different AMI ID for different zones
+- and moar...
