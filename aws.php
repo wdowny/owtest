@@ -101,7 +101,7 @@ $res = $ec2Client->runInstances([
     'InstanceType'   => 't2.micro',
     'KeyName'        => $ssh_keyname,
     'SecurityGroups' => ['sgroup'.NAMETAG],
-    'ClientToken'    => '2018-10-11-test-task-16', // Обеспечивает создание инстанса в единственном экземпляре
+    'ClientToken'    => '2018-10-11-test-task-24', // Обеспечивает создание инстанса в единственном экземпляре
 ]);
 
 $instances = $res->get('Instances');
@@ -110,6 +110,11 @@ $xvdCount = count($instances[0]['BlockDeviceMappings']);
 $iID = $instances[0]['InstanceId'];
 echo $iID.CRLF;
 
+$ec2Client->createTags([
+        'Resources' => [$iID],
+        'Tags' =>[ ['Key' => 'test-owner', 'Value' => 'Yuriy Medyanik'] ],
+    ]); 
+die();
 do {
     echo 'Getting public IPv4... '; sleep(5);
     $res = $ec2Client->describeInstances([
@@ -119,7 +124,7 @@ do {
     ]);
     $instances = $res->get('Reservations')[0]['Instances'];
     $ipAddress = $instances[0]['NetworkInterfaces'][0]['Association']['PublicIp'];
-} while (!$ipAddress);
+} while (!$ipAddress); // или waitUntilInstanceRunning
 echo $ipAddress.CRLF;
 
 do {
@@ -145,7 +150,7 @@ if ($xvdCount<2) {
     sleep(10); // There's a better way
     echo 'Additional volume attached.'.CRLF;
     foreach (explode("\n", $command_set) as $v) {
-       ssh2_exec($sshConn, $v); sleep(1); echo '.'; // По-хорошему, надо проверять результаты.
+        sleep(2); ssh2_exec($sshConn, $v); echo '.'; // По-хорошему, надо проверять результаты.
     }
 } else {
     echo 'Volume already exists, skipping.'.CRLF;
@@ -153,6 +158,12 @@ if ($xvdCount<2) {
 
 ssh2_exec($sshConn, 'sudo nohup php /mnt/owtest/runme.php &');
 
+$res = @file_get_contents('http://ops:works@18.136.207.152/');
+if ($res) {
+    echo 'Rocket launch successful! HTTP returns:'.CRLF.CRLF.$res.CRLF;
+} else {
+    echo 'Sorry, something goes wrong...'.CRLF;
+}
 
 
 
