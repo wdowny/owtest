@@ -1,4 +1,13 @@
 <?php
+if (count(getopt('', ['http']))) {
+
+set_time_limit(0);
+ob_implicit_flush();
+
+iamApache(); die();
+
+}
+
 define("CRLF", "\r\n"); echo CRLF;
 define("NAMETAG", "-test-ymedyanik");
 $aws_phar_path = __DIR__.'/aws.phar';
@@ -17,8 +26,8 @@ git clone https://github.com/wdowny/owtest.git /mnt/owtest
 touch /mnt/owtest/.git/hooks/post-merge
 chmod +x /mnt/owtest/.git/hooks/post-merge
 echo '#!/bin/bash' >> /mnt/owtest/.git/hooks/post-merge
-echo 'sudo kill -9 $(pgrep -f runme)' >> /mnt/owtest/.git/hooks/post-merge
-echo 'sudo nohup php /mnt/owtest/runme.php &' >> /mnt/owtest/.git/hooks/post-merge
+echo 'sudo kill -9 $(pgrep -f aws.php)' >> /mnt/owtest/.git/hooks/post-merge
+echo 'sudo nohup php /mnt/owtest/aws.php --http &' >> /mnt/owtest/.git/hooks/post-merge
 COUT;
 
 // Начало работы
@@ -101,7 +110,7 @@ $res = $ec2Client->runInstances([
     'InstanceType'   => 't2.micro',
     'KeyName'        => $ssh_keyname,
     'SecurityGroups' => ['sgroup'.NAMETAG],
-    'ClientToken'    => '2018-10-11-test-task-24', // Обеспечивает создание инстанса в единственном экземпляре
+    'ClientToken'    => '2018-10-11-test-task-27', // Обеспечивает создание инстанса в единственном экземпляре
 ]);
 
 $instances = $res->get('Instances');
@@ -114,7 +123,7 @@ $ec2Client->createTags([
         'Resources' => [$iID],
         'Tags' =>[ ['Key' => 'test-owner', 'Value' => 'Yuriy Medyanik'] ],
     ]); 
-die();
+
 do {
     echo 'Getting public IPv4... '; sleep(5);
     $res = $ec2Client->describeInstances([
@@ -156,11 +165,14 @@ if ($xvdCount<2) {
     echo 'Volume already exists, skipping.'.CRLF;
 }
 
-ssh2_exec($sshConn, 'sudo nohup php /mnt/owtest/runme.php &');
+ssh2_exec($sshConn, 'sudo nohup php /mnt/owtest/aws.php --http &');
 
-$res = @file_get_contents('http://ops:works@18.136.207.152/');
+$url='http://ops:works@'.$ipAddress.'/';
+
+$res = @file_get_contents($url);
 if ($res) {
-    echo 'Rocket launch successful! HTTP returns:'.CRLF.CRLF.$res.CRLF;
+    echo 'Rocket launch successful! HTTP returns:'.CRLF.CRLF.$res.CRLF.CRLF;
+    echo 'Check URL: '.$url.CRLF;
 } else {
     echo 'Sorry, something goes wrong...'.CRLF;
 }
@@ -168,3 +180,80 @@ if ($res) {
 
 
 
+
+// Блок определений
+
+// Вытаскиваем текущий коммит
+function getCurrentCommit() {
+    $t = file_get_contents(__DIR__.'/.git/HEAD'); if (!$t) return false;
+    $ref = trim(str_replace('ref: ', '', $t));
+    return trim(file_get_contents(__DIR__.'/.git/' . $ref));
+}
+
+// Вытаскиваем нагрузку (для простоты берём из ОС)
+function getResourceUsage() {
+    $pid = getmypid(); 
+    return `ps -p {$pid} -o%cpu,%mem,rss`; 
+}
+
+// Наш веб-сервер
+
+function iamApache () {
+    
+$bind_address = '0.0.0.0';
+$bind_port = 80;
+$http_user='ops';
+$http_pass='works';
+
+$sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+socket_set_option($sock, SOL_SOCKET, SO_REUSEADDR, 1);
+socket_bind($sock, $bind_address, $bind_port);
+socket_listen($sock, 3);
+$i = 0;
+do {
+    $conn = socket_accept($sock);
+    $headers = []; $last_header = ''; $prev_header = '';
+
+    do { // читаем HTTP-запрос от клиента
+        $buffer = socket_read($conn, 8192, PHP_NORMAL_READ);
+        if ($buffer === false) die("Socket error!");
+        $prev_header = $last_header;
+        $last_header = trim($buffer);
+        if ($last_header) {
+            if (strstr($last_header, ': '))
+                    list($h, $t) = explode(': ', $last_header);
+                else
+                    list($h, $t) = [$last_header, ''];
+                        
+            $headers[strtolower(trim($h))] = $t;
+        }
+        if ($last_header == false && $prev_header == false) break;
+    } while (true);
+    $i++; // счётчик числа ответов. Чтоб был.
+    $authorized = false;
+    // проверяем авторизацию
+    if (isset($headers['authorization']) && strstr($headers['authorization'], 'Basic')) {
+        $auth_pair = base64_decode(trim(str_replace('Basic', '', $headers['authorization'])));
+        if ($auth_pair == sprintf('%s:%s', $http_user, $http_pass)) $authorized = true;
+    }
+    if ($authorized) {
+        $payload  = "PID: " . getmypid() . "\r\n";
+        $payload .= "Requests completed: ". $i . "\r\n";
+        $payload .= ($current_commit = getCurrentCommit()) ? ("Git commit: " . $current_commit . "\r\n") : ("Cannot get Git status!\r\n");
+        $payload .= ($res_usage = getResourceUsage()) ? ("Resource usage:\r\n" . $res_usage . "\r\n") : ("Cannot get CPU/mem usage");
+        $response = "HTTP/1.1 200 OK\r\n\r\n" . $payload . "\r\n";
+    } else {
+        $resp_headers = "HTTP/1.1 401 Access Denied\r\n";
+        $resp_headers .= "WWW-Authenticate: Basic realm=\"AREA 51\"\r\n";
+//        $resp_headers .= "Content-Length: 0\r\n";
+        $payload = '401 UnAuthorized!';
+        $response = $resp_headers . "\r\n" . $payload . "\r\n";
+    }
+    socket_write($conn, $response, strlen($response));
+    socket_read($conn, 8192, PHP_NORMAL_READ);
+    socket_shutdown($conn, 2); socket_close($conn); 
+} while (true);
+
+socket_close($sock);
+return true;
+}

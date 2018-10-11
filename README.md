@@ -6,7 +6,10 @@ Script expects Security Credentials Access Key in standart path ( ~/.aws/credent
 User who invoke script at the first stage should have rw access to repo / script dir.
 
 Rocket launch:
-  prompt$ php runme.php
+  prompt$ php aws.php
+
+HTTP service:
+  prompt$ php aws.php --http
 
 Output:
   some messages and pauses during script flow. URL and its content will be produced after well finished job.
