@@ -46,7 +46,7 @@ if (file_exists($aws_phar_path)) {
 use Aws\Ec2\Ec2Client;
 
 $ec2Client = new Ec2Client([
-    'region' => 'ap-southeast-1',
+    'region' => 'eu-west-1',
     'version' => '2016-11-15',
     'profile' => 'default'
 ]);
@@ -110,7 +110,7 @@ $res = $ec2Client->runInstances([
     'InstanceType'   => 't2.micro',
     'KeyName'        => $ssh_keyname,
     'SecurityGroups' => ['sgroup'.NAMETAG],
-    'ClientToken'    => '2018-10-11-test-task-27', // Обеспечивает создание инстанса в единственном экземпляре
+    'ClientToken'    => '2018-10-11-test-task-29', // Обеспечивает создание инстанса в единственном экземпляре
 ]);
 
 $instances = $res->get('Instances');
