@@ -104,7 +104,7 @@ if (count($res->get('SecurityGroups'))) {
 }
 echo 'Waiting for applying changes... '; sleep(3); echo 'Going to create instance.'.CRLF;
 $res = $ec2Client->runInstances([
-    'ImageId'        => 'ami-08569b978cc4dfa10',
+    'ImageId'        => 'ami-047bb4163c506cd98',
     'MinCount'       => 1,
     'MaxCount'       => 1,
     'InstanceType'   => 't2.micro',
